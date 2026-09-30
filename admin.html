@@ -1,0 +1,29 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin | Jhow Trainner</title><link rel="icon" type="image/png" href="assets/logo-jhow.png"><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/system.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><a href="index.html"><img src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></a></div><nav class="side-nav">
+<a class="active" href="admin.html"><span>⌂</span><span class="nav-label">Dashboard</span></a>
+<a class="" href="admin-alunos.html"><span>◎</span><span class="nav-label">Alunos</span></a>
+<a class="" href="admin-personais.html"><span>◉</span><span class="nav-label">Personais</span></a>
+<a class="" href="admin-agenda.html"><span>◷</span><span class="nav-label">Agenda</span></a>
+<a class="" href="admin-reposicoes.html"><span>↻</span><span class="nav-label">Reposições</span></a>
+<a class="" href="admin-treinos.html"><span>▣</span><span class="nav-label">Treinos</span></a>
+<a class="" href="admin-avaliacoes.html"><span>◌</span><span class="nav-label">Avaliações</span></a>
+<a class="" href="admin-financeiro.html"><span>R$</span><span class="nav-label">Financeiro</span></a>
+<a class="" href="admin-comunicacao.html"><span>✦</span><span class="nav-label">Comunicação</span></a>
+<a class="" href="admin-relatorios.html"><span>↗</span><span class="nav-label">Relatórios</span></a>
+<a class="" href="admin-config.html"><span>⚙</span><span class="nav-label">Configurações</span></a>
+</nav><div class="side-bottom"><button class="btn btn-soft" style="width:100%" onclick="logout()"><span>←</span><span class="nav-label">Sair</span></button></div></aside><main class="main"><header class="app-top"><div><b class="screen-title">Painel administrativo</b><div class="small muted">Larissa · operação do studio</div></div><div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" onclick="toggleTheme()">◐</button><div class="userbox"><div><b>Dashboard</b><div class="small muted">Prioridades do dia</div></div><img class="profile-brand-logo" src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></div></div></header><div class="page">
+<div class="page-head"><div><div class="kicker">OPERAÇÃO</div><h1>Primeiro, resolva as reposições.</h1><p>A fila mostra quem precisa repor e quais faltas abriram vagas. A contagem é automática.</p></div><a class="btn btn-primary" href="admin-reposicoes.html">Abrir central de reposições</a></div>
+<div class="stat-strip" style="margin-bottom:13px"><div class="stat"><span>Reposições a encaixar</span><b id="adPending">0</b><small>prioridade operacional</small></div><div class="stat"><span>Vagas liberadas</span><b id="adReleased">0</b><small>faltas avisadas</small></div><div class="stat"><span>Reposições confirmadas</span><b id="adAssigned">0</b><small>já encaixadas</small></div><div class="stat"><span>Alunos ativos</span><b id="adStudents">0</b><small>base cadastrada</small></div></div>
+<div class="system-grid">
+<section class="replacement-hero span7"><div class="kicker">CENTRAL DE REPOSIÇÕES</div><h2>O sistema conta. A equipe só decide o encaixe.</h2><p class="muted">Chega de abrir agenda, contar aula por aula e tentar lembrar quem ainda tem reposição.</p><div class="replacement-flow"><div class="flow-step"><b>1. Aluno avisa</b><p>A falta entra no sistema.</p></div><div class="flow-step"><b>2. Vaga é liberada</b><p>O horário aparece disponível.</p></div><div class="flow-step"><b>3. Admin encaixa</b><p>A equipe escolhe o melhor horário.</p></div><div class="flow-step"><b>4. Todos veem</b><p>Aluno e personal recebem o novo status.</p></div></div></section>
+<section class="card span5"><div class="card-head"><div><h3>Fila mais urgente</h3><div class="small muted">Reposições aguardando horário</div></div></div><div id="adQueue"></div></section>
+<section class="card span12"><div class="card-head"><div><h3>Atalhos operacionais</h3><div class="small muted">Tudo que a Lari precisa no dia</div></div></div><div class="grid4"><a class="workout-card" href="admin-reposicoes.html"><h3>Reposições</h3><p>Contar, encaixar e confirmar.</p></a><a class="workout-card" href="admin-agenda.html"><h3>Agenda</h3><p>Ver por personal e dia.</p></a><a class="workout-card" href="admin-alunos.html"><h3>Alunos</h3><p>Cadastros e vínculos.</p></a><a class="workout-card" href="admin-financeiro.html"><h3>Financeiro</h3><p>Planos e renovações.</p></a></div></section>
+</div></div></main></div>
+<nav class="mobile-role-nav"><a class="active" href="admin.html">Painel</a><a href="admin-reposicoes.html">Repos.</a><a href="admin-agenda.html">Agenda</a><a href="admin-alunos.html">Alunos</a><a href="admin-personais.html">Personais</a><a href="admin-financeiro.html">Financeiro</a></nav>
+<script src="assets/shared.js"></script><script src="assets/system.js"></script><script>
+function renderAdminHome(){
+ const s=getSystem(),pending=(s.replacementRequests||[]).filter(r=>r.status==='waiting'),assigned=(s.replacementRequests||[]).filter(r=>r.status==='assigned'),released=releasedSlots(s);
+ document.querySelector('#adPending').textContent=pending.length;document.querySelector('#adAssigned').textContent=assigned.length;document.querySelector('#adReleased').textContent=released.length;document.querySelector('#adStudents').textContent=s.students.filter(x=>x.active).length;
+ document.querySelector('#adQueue').innerHTML=pending.length?pending.slice(0,4).map(r=>`<div class="replacement-card"><div class="replacement-card-head"><div><h4>${esc(r.studentName)}</h4><p>Faltou: ${r.sourceDay} · ${r.sourceTime}</p></div><span class="schedule-chip status-absence">A encaixar</span></div><p>Crédito válido até ${formatDate(r.expires)}.</p></div>`).join(''):'<div class="empty-state">Fila zerada.</div>';
+}
+renderAdminHome();
+</script></body></html>

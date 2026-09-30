@@ -1,0 +1,33 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu dia | Jhow Trainner</title><link rel="icon" type="image/png" href="assets/logo-jhow.png"><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/system.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><a href="index.html"><img src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></a></div><nav class="side-nav">
+<a class="active" href="personal.html"><span>⌂</span><span class="nav-label">Meu dia</span></a>
+<a class="" href="personal-agenda.html"><span>◷</span><span class="nav-label">Agenda</span></a>
+<a class="" href="personal-presencas.html"><span>✓</span><span class="nav-label">Presenças</span></a>
+<a class="" href="personal-alunos.html"><span>◎</span><span class="nav-label">Alunos</span></a>
+<a class="" href="personal-treinos.html"><span>▣</span><span class="nav-label">Cadastrar treinos</span></a>
+<a class="" href="personal-rotinas.html"><span>↻</span><span class="nav-label">Rotinas</span></a>
+</nav><div class="side-bottom"><button class="btn btn-soft" style="width:100%" onclick="logout()"><span>←</span><span class="nav-label">Sair</span></button></div></aside><main class="main"><header class="app-top"><div><b class="screen-title">Área do personal</b><div class="small muted" id="personalNameHeader"></div></div><div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" onclick="toggleTheme()">◐</button><div class="userbox"><div><b>Meu dia</b><div class="small muted">Agenda simplificada</div></div><img class="profile-brand-logo" src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></div></div></header><div class="page">
+<div class="page-head"><div><div class="kicker">MEU DIA</div><h1>Quem eu atendo e em qual horário.</h1><p>Escolha o dia da semana e veja só o que importa: horário, aluno e situação.</p></div><a class="btn btn-primary" href="personal-agenda.html">Abrir agenda completa</a></div>
+<div class="card" style="margin-bottom:13px"><div class="day-tabs" id="homeDayTabs"></div></div>
+<div class="schedule-summary" style="margin-bottom:13px">
+<div class="summary-pill"><span>Agendados</span><b id="phConfirmed">0</b></div>
+<div class="summary-pill"><span>Faltas avisadas</span><b id="phAbsence">0</b></div>
+<div class="summary-pill"><span>Reposições</span><b id="phReplacement">0</b></div>
+<div class="summary-pill"><span>Experimentais</span><b id="phTrial">0</b></div>
+</div>
+<section class="card"><div class="card-head"><div><h3 id="phDayTitle">Agenda</h3><div class="small muted">Resumo do dia selecionado</div></div><div class="status-legend"><span class="legend-chip status-confirmed">Agendado</span><span class="legend-chip status-absence">Falta</span><span class="legend-chip status-replacement">Reposição</span><span class="legend-chip status-trial">Experimental</span></div></div><div id="phSchedule" class="schedule-day"></div></section>
+</div></main></div>
+<nav class="mobile-role-nav"><a class="active" href="personal.html">Hoje</a><a href="personal-agenda.html">Agenda</a><a href="personal-presencas.html">Presenças</a><a href="personal-alunos.html">Alunos</a><a href="personal-treinos.html">Treinos</a><a href="personal-rotinas.html">Rotinas</a></nav>
+<script src="assets/shared.js"></script><script src="assets/system.js"></script><script>
+const DAYS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];let homeDay='Segunda';
+function renderPersonalHome(){
+ const s=getSystem(),p=activePersonal(s),rows=scheduleForDay(s,p.id,homeDay);
+ document.querySelector('#personalNameHeader').textContent=p.name;
+ document.querySelector('#homeDayTabs').innerHTML=DAYS.map(d=>`<button class="${d===homeDay?'active':''}" onclick="homeDay='${d}';renderPersonalHome()">${d}</button>`).join('');
+ document.querySelector('#phDayTitle').textContent=homeDay;
+ const count=x=>rows.filter(r=>r.status===x).length;
+ document.querySelector('#phConfirmed').textContent=count('confirmed');document.querySelector('#phAbsence').textContent=count('absence');document.querySelector('#phReplacement').textContent=count('replacement');document.querySelector('#phTrial').textContent=count('trial');
+ const groups=Object.groupBy?Object.groupBy(rows,r=>r.time):rows.reduce((a,r)=>((a[r.time]??=[]).push(r),a),{});
+ document.querySelector('#phSchedule').innerHTML=Object.keys(groups).length?Object.entries(groups).map(([time,list])=>`<div class="schedule-slot"><div class="schedule-time">${time}</div><div class="schedule-people">${list.map(r=>`<span class="schedule-chip status-${r.status}">${esc(r.name)}<small>${scheduleStatusLabel(r.status)}</small></span>`).join('')}</div></div>`).join(''):'<div class="empty-state">Sem atendimentos cadastrados para este dia.</div>';
+}
+renderPersonalHome();
+</script></body></html>

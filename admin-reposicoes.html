@@ -1,0 +1,37 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Central de Reposições | Jhow Trainner</title><link rel="icon" type="image/png" href="assets/logo-jhow.png"><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/system.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><a href="index.html"><img src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></a></div><nav class="side-nav">
+<a class="" href="admin.html"><span>⌂</span><span class="nav-label">Dashboard</span></a>
+<a class="" href="admin-alunos.html"><span>◎</span><span class="nav-label">Alunos</span></a>
+<a class="" href="admin-personais.html"><span>◉</span><span class="nav-label">Personais</span></a>
+<a class="" href="admin-agenda.html"><span>◷</span><span class="nav-label">Agenda</span></a>
+<a class="active" href="admin-reposicoes.html"><span>↻</span><span class="nav-label">Reposições</span></a>
+<a class="" href="admin-treinos.html"><span>▣</span><span class="nav-label">Treinos</span></a>
+<a class="" href="admin-avaliacoes.html"><span>◌</span><span class="nav-label">Avaliações</span></a>
+<a class="" href="admin-financeiro.html"><span>R$</span><span class="nav-label">Financeiro</span></a>
+<a class="" href="admin-comunicacao.html"><span>✦</span><span class="nav-label">Comunicação</span></a>
+<a class="" href="admin-relatorios.html"><span>↗</span><span class="nav-label">Relatórios</span></a>
+<a class="" href="admin-config.html"><span>⚙</span><span class="nav-label">Configurações</span></a>
+</nav><div class="side-bottom"><button class="btn btn-soft" style="width:100%" onclick="logout()"><span>←</span><span class="nav-label">Sair</span></button></div></aside><main class="main"><header class="app-top"><div><b class="screen-title">Central de reposições</b><div class="small muted">Fila automática de faltas e encaixes</div></div><div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" onclick="toggleTheme()">◐</button><div class="userbox"><div><b>Reposições</b><div class="small muted">Painel administrativo</div></div><img class="profile-brand-logo" src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></div></div></header><div class="page">
+<div class="page-head"><div><div class="kicker">REPOSIÇÕES</div><h1>A parte que dava trabalho vira uma fila.</h1><p>O sistema conta automaticamente quem precisa repor, quais vagas foram liberadas e o que já foi confirmado.</p></div><span class="badge green">ALUNO NÃO ESCOLHE HORÁRIO</span></div>
+<div class="schedule-summary" style="margin-bottom:13px"><div class="summary-pill"><span>A encaixar</span><b id="rrPending">0</b></div><div class="summary-pill"><span>Vagas liberadas</span><b id="rrReleased">0</b></div><div class="summary-pill"><span>Confirmadas</span><b id="rrAssigned">0</b></div><div class="summary-pill"><span>Vencem em breve</span><b id="rrExpiring">0</b></div></div>
+<div class="system-grid">
+<section class="card span7"><div class="card-head"><div><h3>Fila de reposição</h3><div class="small muted">Ordenada por validade do crédito</div></div></div><div id="rrQueue"></div></section>
+<section class="card span5"><div class="card-head"><div><h3>Vagas liberadas</h3><div class="small muted">Geradas por faltas avisadas</div></div></div><div id="rrSlots"></div></section>
+<section class="card span12"><div class="card-head"><div><h3>Reposições já confirmadas</h3><div class="small muted">Aluno e personal passam a enxergar o horário em roxo</div></div></div><div id="rrAssignedList" class="grid2"></div></section>
+</div></div></main></div>
+<nav class="mobile-role-nav"><a href="admin.html">Painel</a><a class="active" href="admin-reposicoes.html">Repos.</a><a href="admin-agenda.html">Agenda</a><a href="admin-alunos.html">Alunos</a><a href="admin-financeiro.html">Financeiro</a></nav>
+<script src="assets/shared.js"></script><script src="assets/system.js"></script><script>
+let openRequest=null;
+function chooseRequest(id){openRequest=openRequest===id?null:id;renderReplacements()}
+function doAssign(reqId,slotId){
+ const out=assignReplacementV4(reqId,slotId);toast(out.ok?'Reposição encaixada. Aluno e personal já veem o novo horário.':out.message);openRequest=null;renderReplacements();
+}
+function renderReplacements(){
+ const s=getSystem(),pending=(s.replacementRequests||[]).filter(r=>r.status==='waiting').sort((a,b)=>a.expires.localeCompare(b.expires)),assigned=(s.replacementRequests||[]).filter(r=>r.status==='assigned'),slots=releasedSlots(s);
+ document.querySelector('#rrPending').textContent=pending.length;document.querySelector('#rrReleased').textContent=slots.length;document.querySelector('#rrAssigned').textContent=assigned.length;
+ const now=new Date();document.querySelector('#rrExpiring').textContent=pending.filter(r=>(new Date(r.expires+'T12:00:00')-now)/86400000<=10).length;
+ document.querySelector('#rrQueue').innerHTML=pending.length?pending.map(r=>`<div class="replacement-card"><div class="replacement-card-head"><div><h4>${esc(r.studentName)}</h4><p>Falta: ${r.sourceDay} · ${r.sourceTime} · validade ${formatDate(r.expires)}</p></div><button class="btn btn-soft" onclick="chooseRequest('${r.id}')">${openRequest===r.id?'Fechar':'Encontrar horário'}</button></div>${openRequest===r.id?`<div class="assignment-grid">${slots.length?slots.map(sl=>`<button class="assignment-option" onclick="doAssign('${r.id}','${sl.id}')"><b>${sl.day} · ${sl.time}</b><div class="small muted">${esc(personalById(s,sl.personalId)?.name||'Personal')} · vaga liberada por ${esc(sl.name)}</div></button>`).join(''):'<div class="empty-state">Nenhuma vaga liberada no momento.</div>'}</div>`:''}</div>`).join(''):'<div class="empty-state">Nenhuma reposição aguardando encaixe.</div>';
+ document.querySelector('#rrSlots').innerHTML=slots.length?slots.map(sl=>`<div class="replacement-card"><div class="replacement-card-head"><div><h4>${sl.day} · ${sl.time}</h4><p>${esc(personalById(s,sl.personalId)?.name||'Personal')}</p></div><span class="schedule-chip status-free">Vaga liberada</span></div><p>Origem: ${esc(sl.name)} avisou falta.</p></div>`).join(''):'<div class="empty-state">Sem vagas liberadas.</div>';
+ document.querySelector('#rrAssignedList').innerHTML=assigned.length?assigned.map(r=>`<div class="replacement-card"><div class="replacement-card-head"><div><h4>${esc(r.studentName)}</h4><p>Falta de ${r.sourceDay} · ${r.sourceTime}</p></div><span class="schedule-chip status-replacement">Reposição</span></div><div class="row" style="margin-top:8px"><div><div class="row-title">${r.assigned.day} · ${r.assigned.time}</div><div class="row-sub">Horário definido pelo administrativo</div></div></div></div>`).join(''):'<div class="empty-state">Nenhuma reposição confirmada.</div>';
+}
+renderReplacements();
+</script></body></html>

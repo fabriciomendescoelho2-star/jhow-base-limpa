@@ -1,0 +1,68 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Área do Aluno | Jhow Trainner</title><link rel="icon" type="image/png" href="assets/logo-jhow.png"><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/system.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><a href="index.html"><img src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></a></div><nav class="side-nav">
+<a class="active" href="aluno.html"><span>⌂</span><span class="nav-label">Início</span></a>
+<a class="" href="treino.html"><span>▣</span><span class="nav-label">Meu treino</span></a>
+<a class="" href="agendamentos.html"><span>◷</span><span class="nav-label">Agenda & reposições</span></a>
+<a class="" href="avaliacoes.html"><span>◎</span><span class="nav-label">Avaliações</span></a>
+<a class="" href="progresso.html"><span>↗</span><span class="nav-label">Meu progresso</span></a>
+<a class="" href="financeiro.html"><span>R$</span><span class="nav-label">Financeiro</span></a>
+</nav><div class="side-bottom"><button class="btn btn-soft" style="width:100%" onclick="logout()"><span>←</span><span class="nav-label">Sair</span></button></div></aside><main class="main"><header class="app-top"><div><b class="screen-title">Área do aluno</b><div class="small muted">Agenda simples, reposição organizada</div></div><div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" onclick="toggleTheme()">◐</button><div class="userbox"><div><b id="studentNameTop"></b><div class="small muted" id="studentPlanTop"></div></div><img class="profile-brand-logo" src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></div></div></header><div class="page">
+<div class="page-head"><div><div class="kicker">SUA SEMANA</div><h1>O que você precisa saber, sem complicação.</h1><p>Veja seus dias fixos, avise quando não puder ir e acompanhe suas reposições. O encaixe é feito pela equipe do studio.</p></div><span class="badge green">AGENDA ATIVA</span></div>
+
+<div class="stat-strip" style="margin-bottom:13px">
+<div class="stat"><span>Próximo horário</span><b id="homeNextDay">—</b><small id="homeNextTime">—</small></div>
+<div class="stat"><span>Reposições para organizar</span><b id="homePending">0</b><small>a equipe fará o encaixe</small></div>
+<div class="stat"><span>Reposições confirmadas</span><b id="homeAssigned">0</b><small id="homeAssignedSmall">nenhuma confirmada</small></div>
+<div class="stat"><span>Plano</span><b id="homeFrequency">—</b><small id="homePremium">—</small></div>
+</div>
+
+<div class="system-grid">
+<section class="card span7">
+<div class="card-head"><div><h3>Meus dias de treino</h3><div class="small muted">Você visualiza seus horários fixos; não precisa escolher dias.</div></div><a class="btn btn-soft" href="agendamentos.html">Ver agenda</a></div>
+<div class="student-week" id="homeFixedSchedule"></div>
+</section>
+
+<section class="card span5">
+<div class="card-head"><div><h3>Minhas reposições</h3><div class="small muted">A equipe encontra o horário e confirma com você.</div></div><span class="badge" id="homeRepBadge">0</span></div>
+<div id="homeReplacementList"></div>
+<a class="btn btn-primary" href="agendamentos.html" style="width:100%;margin-top:14px">Acompanhar reposições</a>
+</section>
+
+<section class="span12" id="premiumArea"></section>
+</div>
+</div></main></div>
+<nav class="mobile-role-nav"><a class="active" href="aluno.html">Home</a><a href="agendamentos.html">Agenda</a><a href="treino.html">Treino</a><a href="avaliacoes.html">Avaliação</a><a href="progresso.html">Progresso</a><a href="financeiro.html">Plano</a></nav>
+<script src="assets/shared.js"></script><script src="assets/system.js"></script><script>
+function renderStudentHome(){
+ const s=getSystem(),st=activeStudent(s),pending=replacementPendingCount(s,st.id),assigned=replacementAssignedFor(s,st.id);
+ document.querySelector('#studentNameTop').textContent=st.name;
+
+ document.querySelector('#studentPlanTop').textContent=st.plan?.name||`${st.frequency}x por semana`;
+ const first=st.fixedSchedule?.[0];
+ document.querySelector('#homeNextDay').textContent=first?.day||'—';
+ document.querySelector('#homeNextTime').textContent=first?first.time:'—';
+ document.querySelector('#homePending').textContent=pending;
+ document.querySelector('#homeAssigned').textContent=assigned.length;
+ document.querySelector('#homeAssignedSmall').textContent=assigned[0]?`${assigned[0].assigned.day} · ${assigned[0].assigned.time}`:'nenhuma confirmada';
+ document.querySelector('#homeFrequency').textContent=`${st.frequency}x`;
+ document.querySelector('#homePremium').textContent=st.premium?'Premium ativo':'Plano essencial';
+ document.querySelector('#homeRepBadge').textContent=`${pending+assigned.length} ativa${pending+assigned.length===1?'':'s'}`;
+ const reqs=replacementRequestsFor(s,st.id);
+ document.querySelector('#homeFixedSchedule').innerHTML=(st.fixedSchedule||[]).map(sc=>{
+   const req=reqs.find(r=>r.sourceDay===sc.day&&r.sourceTime===sc.time&&r.status!=='cancelled'&&r.status!=='completed');
+   const cls=req?'status-absence':'status-confirmed';
+   const label=req?'Falta avisada':'Agendado';
+   return `<div class="student-day-card"><div class="kicker">${sc.day.toUpperCase()}</div><b>${sc.time}</b><p>Horário fixo</p><div style="margin-top:10px"><span class="schedule-chip ${cls}">${label}</span></div></div>`;
+ }).join('');
+ if(!reqs.length){
+   document.querySelector('#homeReplacementList').innerHTML='<div class="empty-state">Nenhuma reposição em aberto.</div>';
+ } else {
+   document.querySelector('#homeReplacementList').innerHTML=reqs.filter(r=>r.status==='waiting'||r.status==='assigned').map(r=>r.status==='waiting'
+    ?`<div class="replacement-card"><div class="replacement-card-head"><div><h4>Reposição pendente</h4><p>Origem: ${r.sourceDay} · ${r.sourceTime}</p></div><span class="schedule-chip status-absence">Aguardando encaixe</span></div><p style="margin-top:10px">Você não precisa escolher o horário. A equipe está buscando uma vaga para você.</p></div>`
+    :`<div class="replacement-card"><div class="replacement-card-head"><div><h4>Reposição confirmada</h4><p>Origem: ${r.sourceDay} · ${r.sourceTime}</p></div><span class="schedule-chip status-replacement">Reposição</span></div><p style="margin-top:10px"><b>${r.assigned.day} · ${r.assigned.time}</b> — horário definido pela equipe.</p></div>`).join('');
+ }
+ document.querySelector('#premiumArea').innerHTML=st.premium
+ ?`<div class="premium-card"><div class="card-head"><div><div class="kicker">JHOW PREMIUM</div><h3>Treino, evolução e avaliação</h3><div class="small muted">Recursos extras do seu plano premium.</div></div><span class="badge green">PREMIUM</span></div><div class="grid3"><a class="workout-card" href="treino.html"><h3>Meu treino</h3><p>Rotina montada pelo seu personal.</p></a><a class="workout-card" href="progresso.html"><h3>Minha evolução</h3><p>Histórico de cargas e consistência.</p></a><a class="workout-card" href="avaliacoes.html"><h3>Avaliação corporal</h3><p>Acompanhe seus dados ao longo do plano.</p></a></div></div>`
+ :`<div class="premium-card locked-premium"><div class="kicker">JHOW PREMIUM</div><h3>Treino, evolução e avaliação</h3><p class="small muted">Disponível para alunos que contratarem o plano Premium.</p></div>`;
+}
+renderStudentHome();
+</script></body></html>

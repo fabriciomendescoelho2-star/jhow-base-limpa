@@ -1,0 +1,48 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agenda & Reposições | Jhow Trainner</title><link rel="icon" type="image/png" href="assets/logo-jhow.png"><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/system.css"></head><body><div class="app"><aside class="sidebar"><div class="side-logo"><a href="index.html"><img src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></a></div><nav class="side-nav">
+<a class="" href="aluno.html"><span>⌂</span><span class="nav-label">Início</span></a>
+<a class="" href="treino.html"><span>▣</span><span class="nav-label">Meu treino</span></a>
+<a class="active" href="agendamentos.html"><span>◷</span><span class="nav-label">Agenda & reposições</span></a>
+<a class="" href="avaliacoes.html"><span>◎</span><span class="nav-label">Avaliações</span></a>
+<a class="" href="progresso.html"><span>↗</span><span class="nav-label">Meu progresso</span></a>
+<a class="" href="financeiro.html"><span>R$</span><span class="nav-label">Financeiro</span></a>
+</nav><div class="side-bottom"><button class="btn btn-soft" style="width:100%" onclick="logout()"><span>←</span><span class="nav-label">Sair</span></button></div></aside><main class="main"><header class="app-top"><div><b class="screen-title">Agenda & reposições</b><div class="small muted">Você avisa a falta; a equipe cuida do encaixe</div></div><div style="display:flex;align-items:center;gap:10px"><button class="iconbtn" onclick="toggleTheme()">◐</button><div class="userbox"><div><b id="agStudentName"></b><div class="small muted">Área do aluno</div></div><img class="profile-brand-logo" src="assets/logo-jhow.png" alt="Jhow Trainner Studio"></div></div></header><div class="page">
+<div class="page-head"><div><div class="kicker">AGENDA</div><h1>Seus dias são fixos. Reposição é com a equipe.</h1><p>Se não conseguir ir, avise por aqui. A falta entra automaticamente na fila de reposição e o administrativo encontra um horário disponível.</p></div><span class="badge">SEM AUTOAGENDAMENTO</span></div>
+
+<div class="system-grid">
+<section class="card span7">
+<div class="card-head"><div><h3>Meus horários fixos</h3><div class="small muted">Avisar falta não permite escolher outra data.</div></div></div>
+<div id="fixedScheduleStudent" class="stack8"></div>
+</section>
+<section class="card span5">
+<div class="card-head"><div><h3>Resumo de reposições</h3><div class="small muted">Contagem automática pelo sistema</div></div></div>
+<div class="schedule-summary"><div class="summary-pill"><span>A encaixar</span><b id="agPending">0</b></div><div class="summary-pill"><span>Confirmadas</span><b id="agAssigned">0</b></div><div class="summary-pill"><span>Total ativo</span><b id="agTotal">0</b></div><div class="summary-pill"><span>Escolha do aluno</span><b style="font-size:13px">Não</b></div></div>
+<div class="page-note" style="margin-top:12px">Quando houver uma vaga compatível, a equipe do Jhow confirma a reposição para você.</div>
+</section>
+<section class="card span12">
+<div class="card-head"><div><h3>Histórico de reposições</h3><div class="small muted">Pendentes e já encaixadas</div></div></div>
+<div id="studentReplacementHistory" class="grid2"></div>
+</section>
+</div></div></main></div>
+<nav class="mobile-role-nav"><a href="aluno.html">Home</a><a class="active" href="agendamentos.html">Agenda</a><a href="treino.html">Treino</a><a href="avaliacoes.html">Avaliação</a><a href="progresso.html">Progresso</a><a href="financeiro.html">Plano</a></nav>
+<script src="assets/shared.js"></script><script src="assets/system.js"></script><script>
+function warnAbsence(day,time){
+ const s=getSystem(),st=activeStudent(s);
+ if(!confirm(`Confirmar que você não conseguirá ir em ${day} · ${time}? A equipe receberá o pedido de reposição.`))return;
+ const out=notifyAbsenceV4(st.id,day,time);
+ toast(out.ok?'Falta avisada. A reposição entrou na fila do administrativo.':out.message);
+ renderAgendaStudent();
+}
+function renderAgendaStudent(){
+ const s=getSystem(),st=activeStudent(s),reqs=replacementRequestsFor(s,st.id);
+ document.querySelector('#agStudentName').textContent=st.name;
+ document.querySelector('#agPending').textContent=reqs.filter(r=>r.status==='waiting').length;
+ document.querySelector('#agAssigned').textContent=reqs.filter(r=>r.status==='assigned').length;
+ document.querySelector('#agTotal').textContent=reqs.filter(r=>r.status==='waiting'||r.status==='assigned').length;
+ document.querySelector('#fixedScheduleStudent').innerHTML=(st.fixedSchedule||[]).map(sc=>{
+   const req=reqs.find(r=>r.sourceDay===sc.day&&r.sourceTime===sc.time&&r.status!=='cancelled'&&r.status!=='completed');
+   return `<div class="workout-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><div class="kicker">HORÁRIO FIXO</div><h3 style="font-size:22px;margin-top:4px">${sc.day} · ${sc.time}</h3><p>${req?'Falta já avisada para este horário.':'Treino agendado normalmente.'}</p></div><span class="schedule-chip ${req?'status-absence':'status-confirmed'}">${req?'Falta avisada':'Agendado'}</span></div>${req?'':`<button class="btn btn-danger" style="margin-top:14px" onclick="warnAbsence('${sc.day}','${sc.time}')">Não vou conseguir ir</button>`}</div>`;
+ }).join('');
+ document.querySelector('#studentReplacementHistory').innerHTML=reqs.length?reqs.map(r=>`<div class="replacement-card"><div class="replacement-card-head"><div><h4>${r.status==='assigned'?'Reposição confirmada':'Reposição aguardando horário'}</h4><p>Falta: ${r.sourceDay} · ${r.sourceTime}</p></div><span class="schedule-chip ${r.status==='assigned'?'status-replacement':'status-absence'}">${r.status==='assigned'?'Reposição':'Pendente'}</span></div><div class="row" style="margin-top:8px"><div><div class="row-title">${r.status==='assigned'?`${r.assigned.day} · ${r.assigned.time}`:'A equipe ainda está buscando uma vaga'}</div><div class="row-sub">Validade do crédito: ${formatDate(r.expires)}</div></div></div></div>`).join(''):'<div class="empty-state">Nenhuma reposição registrada.</div>';
+}
+renderAgendaStudent();
+</script></body></html>
